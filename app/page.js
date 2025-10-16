@@ -200,7 +200,7 @@ export default function HoosierWeekendHelper() {
                   {weatherData[selectedCity].porchWorthy && (
                     <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-3xl p-8 shadow-2xl">
                       <h4 className="text-3xl font-black mb-3">
-                        ✅ It's Porch Weather!
+                        ✅ It&apos;s Porch Weather!
                       </h4>
                       <p className="text-xl font-bold">
                         Perfect day to sit outside with a sweet tea and wave at the neighbors! 
@@ -264,8 +264,8 @@ export default function HoosierWeekendHelper() {
                     <h4 className="text-2xl font-black mb-3">Reward Yourself! 🎉</h4>
                     <p className="text-lg font-bold">
                       After you finish that project, head to a local hardware store, 
-                      grab a victory coffee, then check out this weekend's events. 
-                      You've earned it, Hoosier!
+                      grab a victory coffee, then check out this weekend&apos;s events. 
+                      You&apos;ve earned it, Hoosier!
                     </p>
                   </div>
                 </div>
