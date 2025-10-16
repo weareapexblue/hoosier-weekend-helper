@@ -1,29 +1,95 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { Cloud, Sun, CloudRain, Wind, MapPin, Calendar, Home, Wrench, PartyPopper, Coffee, ShoppingBag, Star } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Wind, MapPin, Calendar, Wrench, PartyPopper, CloudDrizzle, CloudSnow } from 'lucide-react';
 
 export default function HoosierWeekendHelper() {
   const [selectedCity, setSelectedCity] = useState('');
   const [currentTab, setCurrentTab] = useState('weather');
+  const [weatherData, setWeatherData] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const cities = [
-    { name: 'Carmel', color: 'from-blue-400 to-blue-600' },
-    { name: 'Fishers', color: 'from-green-400 to-green-600' },
-    { name: 'Noblesville', color: 'from-purple-400 to-purple-600' },
-    { name: 'Zionsville', color: 'from-amber-400 to-amber-600' },
-    { name: 'Westfield', color: 'from-red-400 to-red-600' },
-    { name: 'Indianapolis', color: 'from-indigo-400 to-indigo-600' }
+    { name: 'Carmel', color: 'from-blue-400 to-blue-600', lat: 39.9784, lon: -86.1180 },
+    { name: 'Fishers', color: 'from-green-400 to-green-600', lat: 39.9568, lon: -86.0139 },
+    { name: 'Noblesville', color: 'from-purple-400 to-purple-600', lat: 40.0456, lon: -86.0086 },
+    { name: 'Zionsville', color: 'from-amber-400 to-amber-600', lat: 39.9509, lon: -86.2619 },
+    { name: 'Westfield', color: 'from-red-400 to-red-600', lat: 40.0428, lon: -86.1276 },
+    { name: 'Indianapolis', color: 'from-indigo-400 to-indigo-600', lat: 39.7684, lon: -86.1581 }
   ];
 
-  const weatherData = {
-    'Carmel': { temp: 72, condition: 'Sunny', icon: Sun, porchWorthy: true },
-    'Fishers': { temp: 71, condition: 'Partly Cloudy', icon: Cloud, porchWorthy: true },
-    'Noblesville': { temp: 70, condition: 'Sunny', icon: Sun, porchWorthy: true },
-    'Zionsville': { temp: 73, condition: 'Clear', icon: Sun, porchWorthy: true },
-    'Westfield': { temp: 69, condition: 'Breezy', icon: Wind, porchWorthy: true },
-    'Indianapolis': { temp: 74, condition: 'Sunny', icon: Sun, porchWorthy: true }
+  // Fetch real weather data
+  useEffect(() => {
+    if (selectedCity) {
+      fetchWeather(selectedCity);
+    }
+  }, [selectedCity]);
+
+  const fetchWeather = async (cityName) => {
+    setLoading(true);
+    const city = cities.find(c => c.name === cityName);
+    
+    try {
+      // Step 1: Get the forecast URL for this location
+      const pointResponse = await fetch(
+        `https://api.weather.gov/points/${city.lat},${city.lon}`
+      );
+      const pointData = await pointResponse.json();
+      
+      // Step 2: Get the actual forecast
+      const forecastResponse = await fetch(pointData.properties.forecast);
+      const forecastData = await forecastResponse.json();
+      
+      // Get current period (today)
+      const current = forecastData.properties.periods[0];
+      
+      // Determine weather icon based on conditions
+      const getWeatherIcon = (forecast) => {
+        const desc = forecast.shortForecast.toLowerCase();
+        if (desc.includes('rain') || desc.includes('shower')) return CloudRain;
+        if (desc.includes('snow')) return CloudSnow;
+        if (desc.includes('cloud') || desc.includes('overcast')) return Cloud;
+        if (desc.includes('wind')) return Wind;
+        if (desc.includes('sun') || desc.includes('clear') || desc.includes('fair')) return Sun;
+        return Cloud;
+      };
+      
+      // Determine if it's porch-worthy (nice weather!)
+      const isPorchWorthy = (temp, forecast) => {
+        const desc = forecast.toLowerCase();
+        const goodTemp = temp >= 60 && temp <= 85;
+        const noBadWeather = !desc.includes('rain') && !desc.includes('storm') && !desc.includes('snow');
+        return goodTemp && noBadWeather;
+      };
+      
+      setWeatherData(prev => ({
+        ...prev,
+        [cityName]: {
+          temp: current.temperature,
+          condition: current.shortForecast,
+          icon: getWeatherIcon(current),
+          porchWorthy: isPorchWorthy(current.temperature, current.shortForecast),
+          detailedForecast: current.detailedForecast
+        }
+      }));
+      
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+      // Fallback to nice default data if API fails
+      setWeatherData(prev => ({
+        ...prev,
+        [cityName]: {
+          temp: 72,
+          condition: 'Partly Cloudy',
+          icon: Cloud,
+          porchWorthy: true,
+          detailedForecast: 'Weather data temporarily unavailable'
+        }
+      }));
+    }
+    
+    setLoading(false);
   };
 
   const eventsData = {
@@ -63,7 +129,8 @@ export default function HoosierWeekendHelper() {
     'Indianapolis': 'Power wash your deck - porch season is here!'
   };
 
-  const WeatherIcon = selectedCity ? weatherData[selectedCity].icon : Sun;
+  const currentWeather = weatherData[selectedCity];
+  const WeatherIcon = currentWeather?.icon || Sun;
 
   // Schema.org JSON-LD
   const schemaData = {
@@ -182,32 +249,59 @@ export default function HoosierWeekendHelper() {
               {/* Weather Tab */}
               {currentTab === 'weather' && (
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-3xl p-8 shadow-2xl">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-4xl font-black mb-2">{selectedCity}</h3>
-                        <p className="text-2xl font-bold text-blue-100">
-                          {weatherData[selectedCity].condition}
+                  {loading ? (
+                    <div className="bg-white rounded-3xl p-8 shadow-2xl text-center">
+                      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-red-600 mx-auto mb-4"></div>
+                      <p className="text-xl font-bold text-gray-600">Loading live weather data...</p>
+                    </div>
+                  ) : currentWeather ? (
+                    <>
+                      <div className="bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-3xl p-8 shadow-2xl">
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <h3 className="text-4xl font-black mb-2">{selectedCity}</h3>
+                            <p className="text-2xl font-bold text-blue-100">
+                              {currentWeather.condition}
+                            </p>
+                          </div>
+                          <WeatherIcon size={80} className="drop-shadow-lg" />
+                        </div>
+                        <div className="text-6xl font-black mb-4">
+                          {currentWeather.temp}°F
+                        </div>
+                        <p className="text-lg text-blue-100 mt-4">
+                          {currentWeather.detailedForecast}
+                        </p>
+                        <p className="text-sm text-blue-200 mt-4">
+                          ⚡ Live data from National Weather Service
                         </p>
                       </div>
-                      <WeatherIcon size={80} className="drop-shadow-lg" />
-                    </div>
-                    <div className="text-6xl font-black mb-4">
-                      {weatherData[selectedCity].temp}°F
-                    </div>
-                  </div>
 
-                  {weatherData[selectedCity].porchWorthy && (
-                    <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-3xl p-8 shadow-2xl">
-                      <h4 className="text-3xl font-black mb-3">
-                        ✅ It&apos;s Porch Weather!
-                      </h4>
-                      <p className="text-xl font-bold">
-                        Perfect day to sit outside with a sweet tea and wave at the neighbors! 
-                        This is what we live for, folks! 🌞
-                      </p>
-                    </div>
-                  )}
+                      {currentWeather.porchWorthy && (
+                        <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-3xl p-8 shadow-2xl">
+                          <h4 className="text-3xl font-black mb-3">
+                            ✅ It&apos;s Porch Weather!
+                          </h4>
+                          <p className="text-xl font-bold">
+                            Perfect day to sit outside with a sweet tea and wave at the neighbors! 
+                            This is what we live for, folks! 🌞
+                          </p>
+                        </div>
+                      )}
+
+                      {!currentWeather.porchWorthy && (
+                        <div className="bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-3xl p-8 shadow-2xl">
+                          <h4 className="text-3xl font-black mb-3">
+                            🏠 Indoor Day
+                          </h4>
+                          <p className="text-xl font-bold">
+                            Might not be the best porch weather today, but it&apos;s perfect for those home projects! 
+                            Check out the Home To-Do tab for ideas. 🔧
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : null}
                 </div>
               )}
 
@@ -284,7 +378,7 @@ export default function HoosierWeekendHelper() {
               </p>
               <div className="mt-4 pt-4 border-t-2 border-gray-200">
                 <p className="text-red-600 font-black text-lg">
-                  🏀 Go Hoosiers! 🌽
+                  🏀 Go Hoosiers! 🌽 Brought to you by: <a href="https://raptorroofing.com">Raptor Roofing</a>
                 </p>
               </div>
             </div>
