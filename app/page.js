@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react/no-unescaped-entities */
 import React, { useState, useEffect } from 'react';
 import { Sun, Calendar, Wrench, MapPin, Coffee, Sparkles, Heart, Loader, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Cloud, Wind, Droplets } from 'lucide-react';
 
