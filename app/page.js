@@ -427,7 +427,7 @@ const HoosierWeekendHelper = () => {
           
           {/* City Selector */}
           <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-2xl p-6 shadow-2xl border border-white border-opacity-30">
-            <p className="text-yellow-100 font-bold mb-4 text-sm uppercase tracking-wider">Choose Your City</p>
+            <p className="text-blue-100 font-bold mb-4 text-sm uppercase tracking-wider">Choose Your City</p>
             <div className="flex gap-3 flex-wrap">
               {cities.map(city => (
                 <button
