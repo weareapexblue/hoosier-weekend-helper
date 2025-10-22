@@ -753,7 +753,7 @@ const HoosierWeekendHelper = () => {
             <div className="text-sm text-gray-500 space-y-2 pt-4 border-t-2 border-gray-200 font-medium">
               <p>🌤️ Live weather updates every 10 minutes</p>
               <p>📅 Events refresh hourly from official sources</p>
-              <p className="text-red-600 font-black text-lg mt-3">🏀 Go Hoosiers! 🌽 Brought to you by: <a href="https://raptorroofing.com">Raptor Roofing</p>
+              <p className="text-red-600 font-black text-lg mt-3">🏀 Go Hoosiers! 🌽 Brought to you by: <a href="https://raptorroofing.com">Raptor Roofing</a></p>
             </div>
           </div>
         </div>
